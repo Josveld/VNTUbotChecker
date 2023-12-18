@@ -1,23 +1,16 @@
 const { Telegraf } = require('telegraf')
-const { message } = require('telegraf/filters')
-
 const bot = new Telegraf('6572967533:AAFiCVamXtwvC8aka9G4pAOqpsiDYIVzBkY')
 
-
-
-// Your classmates, Telegram tags, and lessons data
 const classmates1 = [
     "Барицький Cвятослав","Висоцький Тарас","Герасименко Микола","Голюк Ілля",
     "Гонта Дмитро","Гуральник Арсен","Гуцаленко Ярослав","Корінник Богдан","Кудринецький Богдан",
     "Лаппо Роман","Максименко Максим","Моісєєв Данііл","Панченко Михайло","Погоріло Владислав",
-    "Сидорук Дмитро","Стадніков Ростислав","Топорівський Владислав","Цимбал Максим"
-];
+    "Сидорук Дмитро","Стадніков Ростислав","Топорівський Владислав","Цимбал Максим"];
 
 const TelegramTags = [
     "Sviatoslav","vysotskyi_tarasik","Herasimenko","curl1ng","GONTA","arsenja9",
-    "Ярослав","jdkk6","ImDrive1488","Роман","maxim_m28","msvvvvvvv","mixa_tut25",
-    "mmmaarrrss","dima_sidoruk","Rostik","toporivskyi_vlad","Volodimir17741"
-];
+    "creepero4ek","jdkk6","ImDrive1488","Роман","maxim_m28","msvvvvvvv","mixa_tut25",
+    "mmmaarrrss","dima_sidoruk","Rostik","toporivskyi_vlad","Volodimir17741"];
 
 const lessons = [
     { name: "Database-Systems", link: "https://meet.google.com/pzc-tpto-wfj" },
@@ -27,19 +20,25 @@ const lessons = [
     { name: "Counteraction-Means-of-Mind-Manipulation", link: "https://meet.google.com/aum-rgow-tgx" },
     { name: "Physical-Education", link: "https://meet.google.com/abx-fkis-mqd" },
     { name: "Object-Oriented-Programming", options: ["Lecture", "Practice"], links: ["https://meet.google.com/oes-fdfs-kxy", "https://meet.google.com/osb-rucc-bxe"] },
-    { name: "English-Language", options: ["First Group", "Second Group"], links: ["https://meet.google.com/kfx-qrmc-pqy", "https://meet.google.com/sak-ypza-wpv?authuser=0&hl=en"] },
-];
+    { name: "English-Language", options: ["First Group", "Second Group"], links: ["https://meet.google.com/kfx-qrmc-pqy", "https://meet.google.com/sak-ypza-wpv?authuser=0&hl=en"] },];
 
-// Create an array to store visit log
+const specialCases = {
+    'Рома': 'Лаппо Роман',
+    'Ярослав': 'Гуцаленко Ярослав'};
+
 const visitLog = [];
 
-// Function to log user visits
+const tagToNameMap = {};
+TelegramTags.forEach((tag, index) => {
+    tagToNameMap[tag.toLowerCase()] = classmates1[index];
+});
+
+
+
 function logVisit(userId, lessonName) {
     const timestamp = new Date().toLocaleString();
-    visitLog.push({ userId, lessonName, timestamp });
-}
+    visitLog.push({ userId, lessonName, timestamp });}
 
-// Function to display visit log
 function displayVisitLog(ctx, date, lesson) {
     let filteredLog = visitLog;
 
@@ -60,27 +59,26 @@ function displayVisitLog(ctx, date, lesson) {
     }
 
     const logText = filteredLog.map(log => `${log.timestamp}: ${ctx.user.name} visited ${log.lessonName}`).join('\n');
-    ctx.reply(logText || 'No visits recorded for the specified criteria.');
-}
+    ctx.reply(logText || 'No visits recorded for the specified criteria.');}
 
-// Map Telegram tags to classmates
-const tagToNameMap = {};
-TelegramTags.forEach((tag, index) => {
-    tagToNameMap[tag.toLowerCase()] = classmates1[index];
-});
 
-// Handle Ярослав and Роман
-const specialCases = {
-    'Рома': 'Лаппо Роман',
-    'Ярослав': 'Гуцаленко Ярослав'
-};
-
-// Middleware to automatically assign names based on Telegram tags
 bot.use((ctx, next) => {
     const userId = ctx.from.id;
     const userTag = ctx.from.username ? ctx.from.username.toLowerCase() : '';
 
-    if (tagToNameMap[userTag]) {
+
+    const userIdToNameMap = {
+        956605356: 'Лаппо Роман',
+        3254235: 'Гуцаленко Ярослав',
+        566183638: 'Гонта Дмитро',
+        1838643516: 'Барицький Святослав',
+
+    };
+
+    if (userIdToNameMap[userId]) {
+        const userName = userIdToNameMap[userId];
+        ctx.user = { id: userId, name: userName };
+    } else if (tagToNameMap[userTag]) {
         const userName = tagToNameMap[userTag];
         ctx.user = { id: userId, name: userName };
     } else if (specialCases[userTag]) {
@@ -93,6 +91,7 @@ bot.use((ctx, next) => {
     return next();
 });
 
+
 // Function to send the lesson menu
 function sendLessonMenu(ctx) {
     const userName = ctx.user.name ? ctx.user.name : 'Unknown User';
@@ -103,12 +102,11 @@ function sendLessonMenu(ctx) {
     });
 }
 
-// Command to trigger the inline keyboard with lesson buttons
 bot.start((ctx) => {
     sendLessonMenu(ctx);
 });
 
-// Handle lesson button callbacks
+
 lessons.forEach((lesson) => {
     const callbackData = lesson.name.replace(/\s/g, '_');
     bot.action(callbackData, (ctx) => {
@@ -133,7 +131,7 @@ lessons.forEach((lesson) => {
     });
 });
 
-// Handle additional options for Object-Oriented Programming and English Language
+
 lessons.filter(lesson => lesson.options && lesson.links).forEach((lesson) => {
     lesson.options.forEach((option, index) => {
         const callbackData = `${lesson.name.replace(/\s/g, '_')}_${index}`;
@@ -148,16 +146,16 @@ lessons.filter(lesson => lesson.options && lesson.links).forEach((lesson) => {
     });
 });
 
-// Command to display visit log
+
 bot.command('info', (ctx) => {
     const [, date, lesson] = ctx.message.text.split(' ');
     displayVisitLog(ctx, date, lesson);
 });
 
-// Start the bot
+
 bot.launch();
 
-// Enable graceful stop
+
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
